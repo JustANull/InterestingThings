@@ -110,9 +110,7 @@ return (function(f)
 end)(function(...)
 	local rules = {n = select('#', ...), ...}
 
-	for i = 1, rules.n do
-		local rule = rules[i]
-
+	for i, rule in ipairs(rules) do
 		if type(rule) == 'function' then
 			--We can only assume their function is conformant.
 		elseif type(rule) == 'string' then
@@ -124,8 +122,8 @@ end)(function(...)
 				errors.bad_argument(i, 'lua type', rule)
 			end
 		else --type(rule) == 'table'
-			if #rule < 2 then
-				errors.bad_argument(i, 'table with 2 or more elements', string.format('table with %d element(s)', #rule))
+			if #rule < 1 then
+				errors.bad_argument(i, 'table with 1 or more elements', string.format('table with %d element(s)', #rule))
 			end
 
 			for j, check in ipairs(rule) do
