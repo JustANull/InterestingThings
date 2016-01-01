@@ -56,7 +56,7 @@ mt.__add = typecheck({isVector, 'number'}, {isVector, 'number'}) .. function(sel
 			return Vector(vector.add(self.x, self.y, other.x, other.y))
 		end
 
-		return Vector(vector.add(self.x, self.y, b, other))
+		return Vector(vector.add(self.x, self.y, other, other))
 	end
 
 	return Vector(vector.add(self, self, other.x, other.y))
@@ -67,7 +67,7 @@ mt.__sub = typecheck({isVector, 'number'}, {isVector, 'number'}) .. function(sel
 			return Vector(vector.sub(self.x, self.y, other.x, other.y))
 		end
 
-		return Vector(vector.sub(self.x, self.y, b, other))
+		return Vector(vector.sub(self.x, self.y, other, other))
 	end
 
 	return Vector(vector.sub(self, self, other.x, other.y))
@@ -78,7 +78,7 @@ mt.__mul = typecheck({isVector, 'number'}, {isVector, 'number'}) .. function(sel
 			return Vector(vector.mul(self.x, self.y, other.x, other.y))
 		end
 
-		return Vector(vector.mul(self.x, self.y, b, other))
+		return Vector(vector.mul(self.x, self.y, other, other))
 	end
 
 	return Vector(vector.mul(self, self, other.x, other.y))
@@ -89,7 +89,7 @@ mt.__div = typecheck({isVector, 'number'}, {isVector, 'number'}) .. function(sel
 			return Vector(vector.div(self.x, self.y, other.x, other.y))
 		end
 
-		return Vector(vector.div(self.x, self.y, b, other))
+		return Vector(vector.div(self.x, self.y, other, other))
 	end
 
 	return Vector(vector.div(self, self, other.x, other.y))
@@ -100,7 +100,7 @@ mt.__eq = typecheck({isVector, 'number'}, {isVector, 'number'}) .. function(self
 			return vector.eq(self.x, self.y, other.x, other.y)
 		end
 
-		return vector.eq(self.x, self.y, b, other)
+		return vector.eq(self.x, self.y, other, other)
 	end
 
 	return vector.eq(self, self, other.x, other.y)
@@ -110,7 +110,7 @@ mt.__tostring = typecheck(isVector) .. function(self)
 end
 
 Vector = setmetatable({
-	new = typecheck('table', 'number', 'number') .. function(self, x, y)
+	new = typecheck('table', {'nil', 'number'}, {'nil', 'number'}) .. function(self, x, y)
 		return setmetatable({
 			x = x or 0,
 			y = y or 0
@@ -120,7 +120,7 @@ Vector = setmetatable({
 		return isVector(arg)
 	end
 }, {
-	__call = typecheck('table', 'number', 'number') .. function(self, x, y)
+	__call = typecheck('table', {'nil', 'number'}, {'nil', 'number'}) .. function(self, x, y)
 		return self:new(x, y)
 	end
 })
