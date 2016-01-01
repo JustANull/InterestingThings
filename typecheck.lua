@@ -12,29 +12,29 @@ end
 
 local errors = assert(require('errors'))
 
-local lua_types = {
-    ['boolean'] = true,
-    ['function'] = true,
-    ['nil'] = true,
-    ['number'] = true,
-    ['string'] = true,
-    ['table'] = true,
-    ['thread'] = true,
-    ['userdata'] = true
-}
+local is_lua_type = function(s)
+    return s == 'boolean' or s == 'function' or s == 'nil' or s == 'number'
+        or s == 'string' or s == 'table' or s == 'thread' or s == 'userdata'
+end
 
 local mt = {
     __concat = function(t, f)
         return function(...)
             local nargs = select('#', ...)
 
-            if t.rules[t.rules.n] == '...' then
+            if t.rules[t.rules.n] == '*' then
+                if nargs < t.rules.n - 2 then
+                    errors.bad_argument(nargs + 1, string.format('at least %d argument(s)', t.rules.n - 2), string.format('%d argument(s)', nargs))
+                end
+            elseif t.rules[t.rules.n] == '+' then
                 if nargs < t.rules.n - 1 then
                     errors.bad_argument(nargs + 1, string.format('at least %d argument(s)', t.rules.n - 1), string.format('%d argument(s)', nargs))
                 end
             else
                 if nargs < t.rules.n then
                     errors.bad_argument(nargs + 1, string.format('%d argument(s)', t.rules.n), string.format('%d argument(s)', nargs))
+                elseif nargs > t.rules.n then
+                    errors.bad_argument(t.rules.n + 1, string.format('%d argument(s)', t.rules.n), string.format('%d argument(s)', nargs))
                 end
             end
 
@@ -48,10 +48,6 @@ local mt = {
 
                 local rule = t.rules[current_rule]
 
-                if rule == nil then
-                    errors.bad_argument(i, string.format('%d argument(s)', current_rule - 1), string.format('%d argument(s)', nargs))
-                end
-
                 if type(rule) == 'function' then
                     local success, expected, got = rule(arg)
 
@@ -59,7 +55,7 @@ local mt = {
                         errors.bad_argument(i, expected, got)
                     end
                 elseif type(rule) == 'string' then
-                    if rule == '...' then
+                    if rule == '*' or rule == '+' then
                         current_rule = current_rule - 1
                         goto begin_check
                     elseif rule ~= 'any' then
@@ -106,7 +102,7 @@ local mt = {
 
 return (function(f)
     mt.__concat = f('table', 'function') .. mt.__concat
-    return f({'function', 'string', 'table'}, '...') .. f
+    return f({'function', 'string', 'table'}, '*') .. f
 end)(function(...)
     local rules = {n = select('#', ...), ...}
 
@@ -114,12 +110,12 @@ end)(function(...)
         if type(rule) == 'function' then
             --We can only assume their function is conformant.
         elseif type(rule) == 'string' then
-            if rule == '...' then
+            if rule == '*' or rule == '+' then
                 if i == 1 or i ~= rules.n then
-                    errors.bad_argument(i, '... after arguments', 'it before')
+                    errors.bad_argument(i, 'repetition after arguments', 'it before')
                 end
-            elseif not lua_types[rule] and rule ~= 'any' then
-                errors.bad_argument(i, 'lua type', rule)
+            elseif not is_lua_type(rule) and rule ~= 'any' then
+                errors.bad_argument(i, 'lua type or repetition', rule)
             end
         else --type(rule) == 'table'
             if #rule < 1 then
@@ -130,7 +126,7 @@ end)(function(...)
                 if type(check) == 'function' then
                     --As above, we can only assume they programmed correctly.
                 elseif type(check) == 'string' then
-                    if not lua_types[check] then
+                    if not is_lua_type(check) then
                         errors.bad_argument(i, string.format('lua type at index %d', j), check)
                     end
                 else --type(check) is something we don't want...
