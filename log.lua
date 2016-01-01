@@ -42,7 +42,7 @@ local log = function(level, ...)
 end
 
 local makeLogger = function(name)
-	return typecheck({'number', 'string'}, '...') .. function(...)
+	return typecheck({'number', 'string'}, '+') .. function(...)
 		log(name, ...)
 		return ...
 	end
