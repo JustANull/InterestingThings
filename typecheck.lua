@@ -69,7 +69,7 @@ local mt = {
 
                     for j, subrule in ipairs(rule) do
                         if type(subrule) == 'function' then
-                            local success, expected, got = subrule(arg)
+                            local success, expected, got = subrule(arg, i, nargs)
 
                             if success then
                                 passed = true
