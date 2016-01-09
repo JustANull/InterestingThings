@@ -103,8 +103,10 @@ local mt = {
 
 return (function(f)
     mt.__concat = f('table', 'function') .. mt.__concat
+
     local check = function(rule, i, nargs)
         local ty = type(rule)
+
         if ty == 'function' then
             -- We can only assume the function is conformant
         elseif ty == 'string' then
@@ -121,6 +123,7 @@ return (function(f)
             end
 
             for j, subrule in ipairs(rule) do
+
                 local ty = type(subrule)
                 if ty == 'function' then
                     -- As above, we can only assume the function is conformant
@@ -138,6 +141,7 @@ return (function(f)
 
         return true
     end
+
     return f(check, '*') .. f
 end)(function(...)
     return setmetatable({
