@@ -47,14 +47,15 @@ local mt = {
                 ::begin_check::
 
                 local rule = t.rules[current_rule]
+                local ty = type(rule)
 
-                if type(rule) == 'function' then
+                if ty == 'function' then
                     local success, expected, got = rule(arg, i, nargs)
 
                     if not success then
                         errors.bad_argument(i, expected, got)
                     end
-                elseif type(rule) == 'string' then
+                elseif ty == 'string' then
                     if rule == '*' or rule == '+' then
                         current_rule = current_rule - 1
                         goto begin_check
@@ -63,7 +64,7 @@ local mt = {
                             errors.bad_argument(i, rule, arg_type)
                         end
                     end
-                else --type(rule) == 'table'
+                else --ty == 'table'
                     local passed = false
                     local expectations = {}
 
