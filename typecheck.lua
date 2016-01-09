@@ -49,7 +49,7 @@ local mt = {
                 local rule = t.rules[current_rule]
 
                 if type(rule) == 'function' then
-                    local success, expected, got = rule(arg)
+                    local success, expected, got = rule(arg, i, nargs)
 
                     if not success then
                         errors.bad_argument(i, expected, got)
@@ -102,41 +102,44 @@ local mt = {
 
 return (function(f)
     mt.__concat = f('table', 'function') .. mt.__concat
-    return f({'function', 'string', 'table'}, '*') .. f
-end)(function(...)
-    local rules = {n = select('#', ...), ...}
-
-    for i, rule in ipairs(rules) do
-        if type(rule) == 'function' then
-            --We can only assume their function is conformant.
-        elseif type(rule) == 'string' then
+    local check = function(rule, i, nargs)
+        local ty = type(rule)
+        if ty == 'function' then
+            -- We can only assume the function is conformant
+        elseif ty == 'string' then
             if rule == '*' or rule == '+' then
-                if i == 1 or i ~= rules.n then
-                    errors.bad_argument(i, 'repetition after arguments', 'it before')
+                if i == 1 or i ~= nargs then
+                    return false, 'repetition after arguments', 'it before'
                 end
             elseif not is_lua_type(rule) and rule ~= 'any' then
-                errors.bad_argument(i, 'lua type or repetition', rule)
+                return false, 'lua type or repetition', rule
             end
-        else --type(rule) == 'table'
+        elseif ty == 'table' then
             if #rule < 1 then
-                errors.bad_argument(i, 'table with 1 or more elements', string.format('table with %d element(s)', #rule))
+                return false, 'table with 1 or more elements', 'table with 0 elements'
             end
 
-            for j, check in ipairs(rule) do
-                if type(check) == 'function' then
-                    --As above, we can only assume they programmed correctly.
-                elseif type(check) == 'string' then
-                    if not is_lua_type(check) then
-                        errors.bad_argument(i, string.format('lua type at index %d', j), check)
+            for j, subrule in ipairs(rule) do
+                local ty = type(subrule)
+                if ty == 'function' then
+                    -- As above, we can only assume the function is conformant
+                elseif ty == 'string' then
+                    if not is_lua_type(subrule) then
+                        return false, string.format('lua type at index %d', j), subrule
                     end
-                else --type(check) is something we don't want...
-                    errors.bad_argument(i, string.format('function or string at index %d', j), type(check))
+                else
+                    return false, string.format('function or string at index %d', j), ty
                 end
             end
+        else
+            return false, 'function or string or table', ty
         end
-    end
 
+        return true
+    end
+    return f(check, '*') .. f
+end)(function(...)
     return setmetatable({
-        rules = rules,
+        rules = {n = select('#', ...), ...},
     }, mt)
 end)
