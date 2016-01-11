@@ -70,7 +70,7 @@ local mt = {
 
                     for j, subrule in ipairs(rule) do
                         if type(subrule) == 'function' then
-                            local success, expected, got = subrule(arg, i, nargs)
+                            local success, expected = subrule(arg, i, nargs)
 
                             if success then
                                 passed = true
@@ -107,9 +107,7 @@ return (function(f)
     local check = function(rule, i, nargs)
         local ty = type(rule)
 
-        if ty == 'function' then
-            -- We can only assume the function is conformant
-        elseif ty == 'string' then
+        if ty == 'string' then
             if rule == '*' or rule == '+' then
                 if i == 1 or i ~= nargs then
                     return false, 'repetition after arguments', 'it before'
@@ -125,17 +123,15 @@ return (function(f)
             for j, subrule in ipairs(rule) do
 
                 local ty = type(subrule)
-                if ty == 'function' then
-                    -- As above, we can only assume the function is conformant
-                elseif ty == 'string' then
+                if ty == 'string' then
                     if not is_lua_type(subrule) then
                         return false, string.format('lua type at index %d', j), subrule
                     end
-                else
+                elseif ty ~= 'function' then
                     return false, string.format('function or string at index %d', j), ty
                 end
             end
-        else
+        elseif ty ~= 'function' then
             return false, 'function or string or table', ty
         end
 
