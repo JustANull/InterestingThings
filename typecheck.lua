@@ -121,8 +121,8 @@ return (function(f)
             end
 
             for j, subrule in ipairs(rule) do
-
                 local ty = type(subrule)
+
                 if ty == 'string' then
                     if not is_lua_type(subrule) then
                         return false, string.format('lua type at index %d', j), subrule
